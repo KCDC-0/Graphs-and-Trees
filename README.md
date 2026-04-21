@@ -1,3 +1,3 @@
 # Graphs-and-Trees
 
-collection of graph and tree traversal algs
+Collection of graph and tree traversal algorithms I coded
