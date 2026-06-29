@@ -67,55 +67,123 @@ def dfs(graph, start_node, target_node):
 
 class Graph:
 
-	def __init__(self, vertices):
-		self.V = vertices
-		self.graph = []
-	def addEdge(self, u, v, w):
-		self.graph.append([u, v, w])
+    def __init__(self, vertices):
+        self.V = vertices
+        self.graph = [[0 for i in range(vertices)] for e in range(vertices)]
 
-	def find(self, parent, i):
-		if parent[i] != i:
-			parent[i] = self.find(parent, parent[i])
-		return parent[i]
+    def printSolution(self, dist):
+        print(f"{'Vertex':<10} | {'Distance from Source':<20}")
+        print("-" * 35)
+        for node in range(self.V):
+            print(f"{node:<10} | {dist[node]:<20}")
 
-	def union(self, parent, rank, x, y):
-		if rank[x] < rank[y]:
-			parent[x] = y
-		elif rank[x] > rank[y]:
-			parent[y] = x
-		else:
-			parent[y] = x
-			rank[x] += 1
+    def printMST(self, parent):
+        print("Edge \tWeight")
+        for i in range(1, self.V):
+            print(parent[i], "-", i, "\t", self.graph[parent[i]][i])
 
-	def KruskalMST(self):
-		result = []
-		i = 0
-		e = 0
-		self.graph = sorted(self.graph, key=lambda item: item[2])
-		parent = []
-		rank = []
-		for node in range(self.V):
-			parent.append(node)
-			rank.append(0)
-		while e < self.V - 1:
-			u, v, w = self.graph[i]
-			i = i + 1
-			x = self.find(parent, u)
-			y = self.find(parent, v)
-			if x != y:
-				e = e + 1
-				result.append([u, v, w])
-				self.union(parent, rank, x, y)
-		minimumCost = 0
-		print("Edges in the constructed MST")
-		for u, v, weight in result:
-			minimumCost += weight
-			print("%d -- %d == %d" % (u, v, weight))
-		print("Minimum Spanning Tree", minimumCost)
+
+    ## Old
+
+    def addEdge(self, u, v, w):
+        self.graph.append([u, v, w])
+
+    def find(self, parent, i):
+        if parent[i] != i:
+            parent[i] = self.find(parent, parent[i])
+        return parent[i]
+
+    def union(self, parent, rank, x, y):
+        if rank[x] < rank[y]:
+            parent[x] = y
+        elif rank[x] > rank[y]:
+            parent[y] = x
+        else:
+            parent[y] = x
+            rank[x] += 1
+
+    def KruskalMST(self):
+        result = []
+        i = 0
+        e = 0
+        self.graph = sorted(self.graph, key=lambda item: item[2])
+        parent = []
+        rank = []
+        for node in range(self.V):
+            parent.append(node)
+            rank.append(0)
+        while e < self.V - 1:
+            u, v, w = self.graph[i]
+            i = i + 1
+            x = self.find(parent, u)
+            y = self.find(parent, v)
+            if x != y:
+                e = e + 1
+                result.append([u, v, w])
+                self.union(parent, rank, x, y)
+        minimumCost = 0
+        print("Edges in the constructed MST")
+        for u, v, weight in result:
+            minimumCost += weight
+            print("%d -- %d == %d" % (u, v, weight))
+        print("Minimum Spanning Tree", minimumCost)
+
+
+    ## New
+
+    def minDistance(self, dist, sptSet):
+        min = 1e7
+
+        for v in range(self.V):
+            if dist[v] < min and sptSet[v] == False:
+                min = dist[v]
+                min_index = v
+
+        return min_index
+
+    
+    def dijkstra(self, src):
+        dist = [1e7] * self.V
+        dist[src] = 0
+        sptSet = [False] * self.V
+
+        for c in range(self.V):
+            u = self.minDistance(dist, sptSet)
+
+            sptSet[u] = True
+
+            for v in range(self.V):
+                if (self.graph[u][v] > 0 and 
+                   sptSet[v] == False and 
+                   dist[v] > dist[u] + self.graph[u][v]):
+                    dist[v] = dist[u] + self.graph[u][v]
+
+        self.printSolution(dist)
+
+    def primMST(self):
+        key = [1e7] * self.V
+        parent = [None]
+        
+        key[0] = 0
+        mstSet = [False] * self.V
+        parent[0] = -1
+
+        for c in range(self.V):
+            u = self.minDistance(key, mstSet)
+            mstSet[u] = True
+
+            for v in range(self.V):
+                if self.graph[u][v] > 0 and mstSet[v] == False \
+                and key[v] > self.graph[u][v]:
+                    key[v] = self.graph[u][v]
+                    parent[v] = u
+
+        self.printMST(parent)
+
 
 ######## Ford Fulkerson (max flow) ########
 
-def bfs(graph, s, t, parent):
+def bfs_parent(graph, s, t, parent):
         visited = [False]*(len(graph))
         queue = []
         queue.append(s)
@@ -136,7 +204,7 @@ def FordFulkerson(graph, source, sink):
         for i in range(len(graph)):
             parent.append(-1)
         max_flow = 0
-        while bfs(graph, source, sink, parent) :
+        while bfs_parent(graph, source, sink, parent) :
                 path_flow = float("Inf")
                 s = sink
                 while(s != source):
